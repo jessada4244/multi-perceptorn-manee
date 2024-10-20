@@ -5,68 +5,76 @@ from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
-# Step 1: Import CSV
-file_path = 'Iristest.csv'  # ระบุ path ของไฟล์ CSV ที่ต้องการ
-df = pd.read_csv(file_path, header=None)  # อ่านไฟล์ CSV โดยไม่มี header
+# Step 1: Import training and test CSV files
+train_file_path = 'Iristrain.csv'  # Specify the path of the training CSV file
+test_file_path = 'Iristest.csv'    # Specify the path of the test CSV file
 
-# ตรวจสอบข้อมูลใน DataFrame
-print(df.head())
+# Read training and test datasets
+df_train = pd.read_csv(train_file_path, header=None)  # Read training file without header
+df_test = pd.read_csv(test_file_path, header=None)    # Read test file without header
 
-# Step 2: แปลงค่าคลาสเป็นตัวเลข
-df['class'] = df[4].astype('category').cat.codes  # ใช้คอลัมน์ที่ 5 เป็น class
+# Step 2: Convert class column to numeric for both training and test datasets
+df_train['class'] = df_train[4].astype('category').cat.codes  # Column 5 as class for training
+df_test['class'] = df_test[4].astype('category').cat.codes    # Column 5 as class for test
 
-# Step 3: แบ่งข้อมูลเป็น features (X) และ target (y)
-X = df.drop([4, 'class'], axis=1)  # เอาคอลัมน์ class ออก
-y = df['class']
+# Step 3: Split features (X) and target (y) for both datasets
+X_train = df_train.drop([4, 'class'], axis=1)  # Drop class column from training
+y_train = df_train['class']
 
-# Step 4: แบ่งข้อมูลเป็น training และ testing set
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_test = df_test.drop([4, 'class'], axis=1)    # Drop class column from test
+y_test = df_test['class']
 
-# Step 4.1: ทำการ Normalize ข้อมูล
+# Step 4: Normalize both training and test data
 scaler = StandardScaler()
 X_train_normalized = scaler.fit_transform(X_train)
 X_test_normalized = scaler.transform(X_test)
 
-# Step 5: สร้างโมเดล MLP
+# Step 5: Create and train the MLP model
 mlp = MLPClassifier(hidden_layer_sizes=(100,), max_iter=300, learning_rate_init=0.01, random_state=42)
-
-# Step 6: ฝึกโมเดล
 mlp.fit(X_train_normalized, y_train)
 
-# Step 7: ทำนายผลและคำนวณค่า accuracy
-y_pred = mlp.predict(X_test_normalized)
-accuracy = accuracy_score(y_test, y_pred)
-print(f'Accuracy: {accuracy*100:.2f}%')
+# Step 6: Predict and calculate accuracy for the test dataset
+y_pred_train = mlp.predict(X_train_normalized)  # Predictions on training data
+train_accuracy = accuracy_score(y_train, y_pred_train)  # Training accuracy
 
-# Step 8: Plot ข้อมูล dataset และประกาศค่า Accuracy
-plt.figure(figsize=(15, 5))
+y_pred_test = mlp.predict(X_test_normalized)  # Predictions on test data
+test_accuracy = accuracy_score(y_test, y_pred_test)  # Test accuracy
 
-# Plot Original Dataset
-plt.subplot(1, 4, 1)
-plt.scatter(X[0], X[1], c=y, cmap='viridis')
-plt.title('Original Dataset')
+print(f'Training Accuracy: {train_accuracy*100:.2f}%')
+print(f'Test Accuracy: {test_accuracy*100:.2f}%')
 
-# Plot Normalized Train Dataset
-plt.subplot(1, 4, 2)
+# Step 7: Plot datasets and accuracy
+plt.figure(figsize=(18, 5))
+
+# Plot Original Training Dataset
+plt.subplot(1, 5, 1)
+plt.scatter(X_train[0], X_train[1], c=y_train, cmap='viridis')
+plt.title('Original Train Dataset')
+
+# Plot Normalized Training Dataset
+plt.subplot(1, 5, 2)
 plt.scatter(X_train_normalized[:, 0], X_train_normalized[:, 1], c=y_train, cmap='plasma')
 plt.title('Normalized Train Dataset')
 
-# Plot Normalized Test Dataset
-plt.subplot(1, 4, 3)
-plt.scatter(X_test_normalized[:, 0], X_test_normalized[:, 1], c=y_test, cmap='coolwarm')
+# Plot Original Test Dataset
+plt.subplot(1, 5, 3)
+plt.scatter(X_test[0], X_test[1], c=y_test, cmap='viridis')
+plt.title('Original Test Dataset')
 
-# Plot Accuracy
-plt.subplot(1, 4, 4)
-plt.bar(['Accuracy'], [accuracy])
-plt.title('Model Accuracy')
+# Plot Normalized Test Dataset
+plt.subplot(1, 5, 4)
+plt.scatter(X_test_normalized[:, 0], X_test_normalized[:, 1], c=y_test, cmap='coolwarm')
+plt.title('Normalized Test Dataset')
+
+# Plot Model Accuracy (Train vs Test)
+plt.subplot(1, 5, 5)
+plt.bar(['Train Accuracy', 'Test Accuracy'], [train_accuracy, test_accuracy])
+plt.title('Model Accuracy (Train vs Test)')
 plt.ylim(0, 1)
 
-plt.annotate(f'Accuracy: {accuracy*100:.2f}%', 
-             xy=(0.1, 0.9), 
-             xycoords='axes fraction', 
-             fontsize=12, 
-             color='black',
-             bbox=dict(facecolor='white', alpha=0.5))
+# Annotate the accuracy values
+plt.annotate(f'Train: {train_accuracy*100:.2f}%', xy=(0.05, 0.9), xycoords='axes fraction', fontsize=12, color='black', bbox=dict(facecolor='white', alpha=0.5))
+plt.annotate(f'Test: {test_accuracy*100:.2f}%', xy=(0.55, 0.9), xycoords='axes fraction', fontsize=12, color='black', bbox=dict(facecolor='white', alpha=0.5))
 
 plt.tight_layout()
 plt.show()

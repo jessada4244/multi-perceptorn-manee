@@ -6,12 +6,18 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 import matplotlib.pyplot as plt
 
 # Load training dataset
-train_file_path = 'Mushroomtrain.csv'  # Adjust the path if necessary
+train_file_path = 'Votingrecordtrain.csv'  # Adjust the path if necessary
 df_train = pd.read_csv(train_file_path)
 
 # Apply Label Encoding to all columns in the training dataset
-for column in df_train.columns:
-    df_train[column] = LabelEncoder().fit_transform(df_train[column])
+le = LabelEncoder()
+
+# Encode class labels (first column)
+df_train[df_train.columns[0]] = le.fit_transform(df_train[df_train.columns[0]])
+
+# Encode all features in training data
+for column in df_train.columns[1:]:
+    df_train[column] = le.fit_transform(df_train[column])
 
 # Split data into features (X) and target (y)
 X_train = df_train.drop(columns=[df_train.columns[0]])  # Drop first column assuming it's the class
@@ -28,18 +34,18 @@ mlp = MLPClassifier(hidden_layer_sizes=(100,), max_iter=300, learning_rate_init=
 mlp.fit(X_train_normalized, y_train)
 
 # Load test dataset
-test_file_path = 'Mushroomtest.csv'  # Adjust the path if necessary
+test_file_path = 'Votingrecordtest.csv'  # Adjust the path if necessary
 df_test = pd.read_csv(test_file_path)
 
 # Apply Label Encoding to the test dataset
-for column in df_test.columns:
-    df_test[column] = LabelEncoder().fit_transform(df_test[column])
+df_test[df_test.columns[0]] = le.fit_transform(df_test[df_test.columns[0]])
+
+# Encode all features in test data
+for column in df_test.columns[1:]:
+    df_test[column] = le.fit_transform(df_test[column])
 
 # Adjust test data to match the structure of the training data
 X_test = df_test.drop(columns=[df_test.columns[0]])  # Drop the first column from the test dataset
-
-# Ensure that feature names don't cause a mismatch by resetting index
-X_test.columns = X_train.columns
 
 # Normalize the test data using the same scaler as for the training data
 X_test_normalized = scaler.transform(X_test.values)  # Use .values to ignore column names
